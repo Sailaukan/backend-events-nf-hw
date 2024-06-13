@@ -1,7 +1,10 @@
+import { User } from './types/response';
 import { Request, Response } from 'express';
 import { CreateUserDto } from './dtos/CreateUser.dto';
 import AuthService from './auth-service';
 import UserModel from "./models/User"
+import ChatModel from './models/Chat';
+import { logger } from '../logger';
 
 class AuthController {
   private authService: AuthService;
@@ -33,6 +36,36 @@ class AuthController {
       res.status(500).json({ message: 'Error logging in' });
     }
   }
+
+  getUsers = async (req: Request, res: Response) => {
+    const users = await UserModel.find()
+
+    res.status(200).json(users);
+  }
+
+  getChats = async (req: Request, res: Response) => {
+    const chats = await ChatModel.find()
+    res.status(200).json(chats);
+  }
+
+
+  getChatByEmails = async (req: Request, res: Response) => {
+    try {
+      const chat = await ChatModel.findOne({
+        participants: { $all: [req.params.p1, req.params.p2] }
+      }, { messages: 1 });
+      console.log(req.params.p1)
+      console.log(chat)
+      if (!chat) {
+        return res.status(404).json({ message: 'Chat not found' });
+      }
+      console.log(chat.messages)
+      res.status(200).json(chat.messages);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
 
   refreshToken = async (req: Request, res: Response): Promise<void> => {
     try {
